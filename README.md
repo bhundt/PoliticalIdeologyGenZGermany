@@ -8,7 +8,7 @@ You will need two datasets:
 - The cumulative data up to 2018 which you can find here: [ALLBUS 1980-2018 Cumulative File](https://search.gesis.org/research_data/ZA5276)
 - The cross sectional data file for 2021 which you can find here: [ALLBUS 2021](https://search.gesis.org/research_data/ZA5282)
 
-Download the SPSS (`*.sav``) datasets and put them into a `data/` folder within the project.
+Download the SPSS (`*.sav`) datasets and put them into a `data/` folder within the project.
 
 ## Usage
 This project uses poetry for dependency management. To install the dependencies run:
