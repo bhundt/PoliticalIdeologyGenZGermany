@@ -5,24 +5,24 @@ import matplotlib.pyplot as plt
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
-def read_2021(folder: str):
-    df_2021 = pd.read_spss(os.path.join(folder, "2021.sav"), convert_categoricals=False)
-    df_2021["year"] = 2021
-    return df_2021
+def _read_2021(folder: str) -> pd.DataFrame:
+    df = pd.read_spss(os.path.join(folder, "2021.sav"), convert_categoricals=False)
+    df["year"] = 2021
+    return df
 
 
-def read_upto2018(folder: str):
-    df_upto2018 = pd.read_spss(os.path.join(folder, "upto2018.sav"), convert_categoricals=False)
-    df_upto2018.year = df_upto2018.year.astype(int)
-    return df_upto2018
+def _read_upto2018(folder: str) -> pd.DataFrame:
+    df = pd.read_spss(os.path.join(folder, "upto2018.sav"), convert_categoricals=False)
+    df.year = df.year.astype(int)
+    return df
 
 
 def load_relevant_data(folder: str) -> pd.DataFrame:
     """Load relevant data from data folder.
     The data is stored in two SPSS files, one for the years up to 2018, and one for 2021.
     """
-    df_2021 = read_2021(folder)
-    df_upto2018 = read_upto2018(folder)
+    df_2021 = _read_2021(folder)
+    df_upto2018 = _read_upto2018(folder)
 
     df = pd.concat([df_upto2018, df_2021], ignore_index=True).reset_index(drop=True)
     return df
@@ -33,7 +33,7 @@ def remove_unwanted_columns(df: pd.DataFrame) -> pd.DataFrame:
     pa01: political orientation on a scale from 1 to 10
     wghtptew: weighting factor which needs to be applied to the data to make it representative between east and west Germany
     """
-    df = df[["year", "age", "sex", "pa01", "wghtptew"]]
+    df = df[["year", "age", "sex", "pa01", "wghtpew"]]
     return df
 
 
@@ -251,19 +251,34 @@ def resample_diffs(df, query, iters=101):
 
 
 if __name__ == "__main__":
-    df = read_2021("data")
-    # df = load_relevant_data("data")
-    print(df["wghtptew"])
-    print(df["pa01"].value_counts(dropna=False))
-    # df = remove_unwanted_columns(df)
-    # df = transform_sex(df)
-    # df = filter_to_gen_z(df)
-    # df = transform_ideology(df)
+    df = load_relevant_data("data")
+    # TODO: fix nan in pa01
+    print(df["wghtpew"])
+    df = remove_unwanted_columns(df)
+    df = transform_sex(df)
+    df = filter_to_gen_z(df)
+    df = transform_ideology(df)
+    print(df["wghtpew"])
 
-    # # this is  simple, non weighted version
-    # make_plot(df, title="Gen Z - Germany")
-    # savefig("products/ideology_gap1.png")
+    # this is  simple, non weighted version
+    make_plot(df, title="Age < 30 - Germany")
+    savefig("products/ideology_gap_unweighted.png")
 
     # this is the weighted version
-    # diffs_male = resample_diffs(df, 'sex=="man"')
-    # diffs_female = resample_diffs(df, 'sex=="woman"')
+    male = df.query('sex=="man"')
+    female = df.query('sex=="woman"')
+
+    diff_male = make_diff(male)
+    diff_female = make_diff(female)
+
+    diffs_male = resample_diffs(df, 'sex=="man"')
+    diffs_female = resample_diffs(df, 'sex=="woman"')
+
+    plot_percentiles(diffs_male)
+    plot_percentiles(diffs_female)
+
+    diff_male.plot(style=".", color="C0", label="Male")
+    diff_female.plot(style=".", color="C1", label="Female")
+
+    decorate_plot("Age < 30 with sampling weights")
+    savefig("products/ideology_gap_weighted.png")
