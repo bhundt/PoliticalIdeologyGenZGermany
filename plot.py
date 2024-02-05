@@ -178,6 +178,7 @@ def savefig(filename, **options):
 
 def resample_rows_weighted(df, column):
     """Resamples a DataFrame using probabilities proportional to given column.
+    Credit to Allen Downey, https://colab.research.google.com/github/AllenDowney/ProbablyOverthinkingIt/blob/book/examples/ideology_gap.ipynb
 
     df: DataFrame
     column: string column name to use as weights
@@ -191,6 +192,7 @@ def resample_rows_weighted(df, column):
 
 def resample_by_year(df, column):
     """Resample rows within each year.
+    Credit to Allen Downey, https://colab.research.google.com/github/AllenDowney/ProbablyOverthinkingIt/blob/book/examples/ideology_gap.ipynb
 
     df: DataFrame
     column: string name of weight variable
@@ -205,6 +207,7 @@ def resample_by_year(df, column):
 
 def percentile_rows(series_seq, ps):
     """Computes percentiles from aligned series.
+    Credit to Allen Downey, https://colab.research.google.com/github/AllenDowney/ProbablyOverthinkingIt/blob/book/examples/ideology_gap.ipynb
 
     series_seq: list of sequences
     ps: cumulative probabilities
@@ -225,6 +228,7 @@ def percentile_rows(series_seq, ps):
 
 def plot_percentiles(series_seq, ps=None, label=None, **options):
     """Plot the low, median, and high percentiles.
+    Credit to Allen Downey, https://colab.research.google.com/github/AllenDowney/ProbablyOverthinkingIt/blob/book/examples/ideology_gap.ipynb
 
     series_seq: sequence of Series
     ps: percentiles to use for low, medium and high
@@ -242,6 +246,9 @@ def plot_percentiles(series_seq, ps=None, label=None, **options):
 
 
 def resample_diffs(df, query, iters=101):
+    """
+    Credit to Allen Downey, https://colab.research.google.com/github/AllenDowney/ProbablyOverthinkingIt/blob/book/examples/ideology_gap.ipynb
+    """
     diffs = []
     for i in range(iters):
         sample = resample_by_year(df, "wghtpew").query(query)
@@ -260,7 +267,7 @@ if __name__ == "__main__":
     df = transform_ideology(df)
     print(df["wghtpew"])
 
-    # this is  simple, non weighted version
+    # this is  simple, non weighted analysis
     make_plot(df, title="Age < 30 - Germany")
     savefig("products/ideology_gap_unweighted.png")
 
