@@ -6,14 +6,13 @@ authors = ["Bastian.hundt <bastian.hundt@gmx.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-scikit-learn = "^1.4.0"
-pyarrow = "^15.0.0"
-pyreadstat = "^1.2.6"
-numpy = "^1.26.3"
+python = "^3.9"
 pandas = "^2.2.0"
 statsmodels = "^0.14.1"
 matplotlib = "^3.8.2"
+pyarrow = "^15.0.0"
+pyreadstat = "^1.2.6"
+ipykernel = "^6.29.0"
 
 
 [build-system]

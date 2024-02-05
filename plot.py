@@ -5,22 +5,35 @@ import matplotlib.pyplot as plt
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
+def read_2021(folder: str):
+    df_2021 = pd.read_spss(os.path.join(folder, "2021.sav"), convert_categoricals=False)
+    df_2021["year"] = 2021
+    return df_2021
+
+
+def read_upto2018(folder: str):
+    df_upto2018 = pd.read_spss(os.path.join(folder, "upto2018.sav"), convert_categoricals=False)
+    df_upto2018.year = df_upto2018.year.astype(int)
+    return df_upto2018
+
+
 def load_relevant_data(folder: str) -> pd.DataFrame:
     """Load relevant data from data folder.
     The data is stored in two SPSS files, one for the years up to 2018, and one for 2021.
     """
-    df_upto2018 = pd.read_spss(os.path.join(folder, "upto2018.sav"), convert_categoricals=False)
-    df_2021 = pd.read_spss(os.path.join(folder, "2021.sav"), convert_categoricals=False)
+    df_2021 = read_2021(folder)
+    df_upto2018 = read_upto2018(folder)
 
-    df_2021["year"] = 2021
-    df_upto2018.year = df_upto2018.year.astype(int)
-
-    return pd.concat([df_upto2018, df_2021], ignore_index=True).reset_index(drop=True)
+    df = pd.concat([df_upto2018, df_2021], ignore_index=True).reset_index(drop=True)
+    return df
 
 
 def remove_unwanted_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Keep only columns we need for analysis"""
-    df = df[["year", "age", "sex", "pa01"]]
+    """Keep only columns we need for analysis
+    pa01: political orientation on a scale from 1 to 10
+    wghtptew: weighting factor which needs to be applied to the data to make it representative between east and west Germany
+    """
+    df = df[["year", "age", "sex", "pa01", "wghtptew"]]
     return df
 
 
@@ -163,12 +176,94 @@ def savefig(filename, **options):
     plt.savefig(filename, **options)
 
 
-if __name__ == "__main__":
-    df = load_relevant_data("data")
-    df = remove_unwanted_columns(df)
-    df = transform_sex(df)
-    df = filter_to_gen_z(df)
-    df = transform_ideology(df)
+def resample_rows_weighted(df, column):
+    """Resamples a DataFrame using probabilities proportional to given column.
 
-    make_plot(df, title="Gen Z - Germany")
-    savefig("products/ideology_gap1.png")
+    df: DataFrame
+    column: string column name to use as weights
+
+    returns: DataFrame
+    """
+    weights = df[column]
+    sample = df.sample(n=len(df), replace=True, weights=weights)
+    return sample
+
+
+def resample_by_year(df, column):
+    """Resample rows within each year.
+
+    df: DataFrame
+    column: string name of weight variable
+
+    returns DataFrame
+    """
+    grouped = df.groupby("year")
+    samples = [resample_rows_weighted(group, column) for _, group in grouped]
+    sample = pd.concat(samples, ignore_index=True)
+    return sample
+
+
+def percentile_rows(series_seq, ps):
+    """Computes percentiles from aligned series.
+
+    series_seq: list of sequences
+    ps: cumulative probabilities
+
+    returns: Series of x-values, NumPy array with selected rows
+    """
+    df = pd.concat(series_seq, axis=1).dropna()
+    xs = df.index
+    array = df.values.transpose()
+    array = np.sort(array, axis=0)
+    nrows, _ = array.shape
+
+    ps = np.asarray(ps)
+    indices = (ps * nrows).astype(int)
+    rows = array[indices]
+    return xs, rows
+
+
+def plot_percentiles(series_seq, ps=None, label=None, **options):
+    """Plot the low, median, and high percentiles.
+
+    series_seq: sequence of Series
+    ps: percentiles to use for low, medium and high
+    label: string label for the median line
+    options: options passed plt.plot and plt.fill_between
+    """
+    if ps is None:
+        ps = [0.05, 0.5, 0.95]
+    assert len(ps) == 3
+
+    xs, rows = percentile_rows(series_seq, ps)
+    low, med, high = rows
+    plt.plot(xs, med, alpha=0.5, label=label, **options)
+    plt.fill_between(xs, low, high, linewidth=0, alpha=0.2, **options)
+
+
+def resample_diffs(df, query, iters=101):
+    diffs = []
+    for i in range(iters):
+        sample = resample_by_year(df, "wghtpew").query(query)
+        diff = make_diff(sample)
+        diffs.append(diff)
+    return diffs
+
+
+if __name__ == "__main__":
+    df = read_2021("data")
+    # df = load_relevant_data("data")
+    print(df["wghtptew"])
+    print(df["pa01"].value_counts(dropna=False))
+    # df = remove_unwanted_columns(df)
+    # df = transform_sex(df)
+    # df = filter_to_gen_z(df)
+    # df = transform_ideology(df)
+
+    # # this is  simple, non weighted version
+    # make_plot(df, title="Gen Z - Germany")
+    # savefig("products/ideology_gap1.png")
+
+    # this is the weighted version
+    # diffs_male = resample_diffs(df, 'sex=="man"')
+    # diffs_female = resample_diffs(df, 'sex=="woman"')
