@@ -57,16 +57,16 @@ def transform_ideology(df: pd.DataFrame) -> pd.DataFrame:
     df.replace(
         {
             "pa01": {
-                1: "Liberal",
-                2: "Liberal",
-                3: "Liberal",
-                4: "Liberal",
-                5: "Liberal",
-                6: "Conservative",
-                7: "Conservative",
-                8: "Conservative",
-                9: "Conservative",
-                10: "Conservative",
+                1: "Left",
+                2: "Left",
+                3: "Left",
+                4: "Left",
+                5: "Left",
+                6: "Right",
+                7: "Right",
+                8: "Right",
+                9: "Right",
+                10: "Right",
             }
         },
         inplace=True,
@@ -82,7 +82,7 @@ def make_diff(df):
     column = df["pa01"]
 
     xtab = pd.crosstab(year, column, normalize="index")
-    diff = xtab["Liberal"] - xtab["Conservative"]
+    diff = xtab["Left"] - xtab["Right"]
 
     return diff * 100
 
@@ -152,7 +152,7 @@ def decorate(**options):
 
 
 def decorate_plot(title):
-    decorate(xlabel="Year", ylabel="% liberal - % conservative", title=title)
+    decorate(xlabel="Year", ylabel="% Left - % Right", title=title)
 
 
 def make_plot(df, title=""):
